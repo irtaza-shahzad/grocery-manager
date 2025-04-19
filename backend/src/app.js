@@ -1,22 +1,26 @@
+require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
 const { connectDB } = require('./config/db');
+const userRoutes = require('./routes/userRoutes');
+const productRoutes = require('./routes/productRoutes');
 
 const app = express();
-const port = require('./config/dotenv').port;
 
-// Middleware
-app.use(cors());
-app.use(bodyParser.json());
+const PORT = process.env.PORT || 3000;
 
-// Connect to database
-connectDB();
+app.use(express.json());
 
-// Sample route
-app.get('/', (req, res) => {
-  res.send('API is running...');
+
+
+connectDB(); // call this ONCE to connect to DB
+
+// mount user-management routes under /api/users
+app.use('/api/users', userRoutes);
+app.use('/api/products', productRoutes);
+
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`)
+  console.log(`Database Connected Successfully`);
+  console.log(`Visit: http://localhost:${PORT}`);
 });
-
-// Listen to requests
-app.listen(port, () => console.log(` Server running on port ${port}`));
