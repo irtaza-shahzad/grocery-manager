@@ -1,3 +1,5 @@
+
+
 require('dotenv').config();
 const express = require('express');
 const { connectDB } = require('./config/db');
@@ -8,6 +10,9 @@ const orderRoutes=require('./routes/orderRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const interfaceRoutes = require('./routes/interfaceRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
+const recipeRoutes = require('./routes/recipeRoutes');  
+const favoritesRoutes = require('./routes/favoriteRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 
@@ -27,6 +32,9 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/interface', interfaceRoutes);
 app.use('/api/inventory', inventoryRoutes);
+app.use('/api/recipes', recipeRoutes); 
+app.use('/api/favorites', favoritesRoutes);
+app.use('/api/admin', adminRoutes); 
 
 
 app.listen(PORT, () => {
