@@ -6,6 +6,8 @@ const productRoutes = require('./routes/productRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const orderRoutes=require('./routes/orderRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
+const interfaceRoutes = require('./routes/interfaceRoutes');
+const inventoryRoutes = require('./routes/inventoryRoutes');
 
 const app = express();
 
@@ -23,6 +25,8 @@ app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/interface', interfaceRoutes);
+app.use('/api/inventory', inventoryRoutes);
 
 
 app.listen(PORT, () => {
