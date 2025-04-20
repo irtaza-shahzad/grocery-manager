@@ -8,6 +8,9 @@ const orderRoutes=require('./routes/orderRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const interfaceRoutes = require('./routes/interfaceRoutes');
 const inventoryRoutes = require('./routes/inventoryRoutes');
+const recipeRoutes = require('./routes/recipeRoutes');
+const favoriteRoutes = require('./routes/favoriteRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 
@@ -27,6 +30,9 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/interface', interfaceRoutes);
 app.use('/api/inventory', inventoryRoutes);
+app.use('/api/recipes', recipeRoutes);
+app.use('/api/favorites', favoriteRoutes);
+app.use('/api/admin', adminRoutes);
 
 
 app.listen(PORT, () => {
