@@ -1,5 +1,6 @@
 const sql = require('mssql');
-const dbConfig = require('../config/db');
+const {getPool} = require('../config/db');
+
 
 // 1. Add Product
 const addProduct = async (req, res) => {
@@ -10,7 +11,7 @@ const addProduct = async (req, res) => {
             return res.status(400).json({ message: 'UserID is required' });
         }
 
-        const pool = await sql.connect(dbConfig);
+        const pool = await getPool();
         const result = await pool.request()
             .input('Name', sql.NVarChar, name)
             .input('Price', sql.Decimal, price)
@@ -42,7 +43,7 @@ const updateProduct = async (req, res) => {
             return res.status(400).json({ message: 'UserID is required' });
         }
 
-        const pool = await sql.connect(dbConfig);
+        const pool = await getPool();
         await pool.request()
             .input('ProductID', sql.Int, productID)
             .input('Name', sql.NVarChar, name)
@@ -73,7 +74,7 @@ const deleteProduct = async (req, res) => {
             return res.status(400).json({ message: 'UserID is required' });
         }
 
-        const pool = await sql.connect(dbConfig);
+        const pool = await getPool();
         await pool.request()
             .input('ProductID', sql.Int, productID)
             .input('UserID', sql.Int, userID)
@@ -98,7 +99,7 @@ const manageUsers = async (req, res) => {
             return res.status(400).json({ message: 'Admin UserID is required' });
         }
 
-        const pool = await sql.connect(dbConfig);
+        const pool = await getPool();
         await pool.request()
             .input('UserID', sql.Int, userID)
             .input('TargetUserID', sql.Int, targetUserID)

@@ -1,10 +1,10 @@
-const { sql } = require('../config/db');
+const { sql, getPool } = require('../config/db');
 
 // Get all products by category
 const getProductsByCategory = async (req, res) => {
   const { categoryName } = req.params;
   try {
-    const pool = await sql.connect();
+    const pool = await getPool();
     const result = await pool.request()
       .input('CategoryName', sql.NVarChar(50), categoryName)
       .query(`
@@ -25,7 +25,7 @@ const getProductsByCategory = async (req, res) => {
 const filterProductsByPrice = async (req, res) => {
   const { minPrice, maxPrice } = req.query;
   try {
-    const pool = await sql.connect();
+    const pool = await getPool();
     const result = await pool.request()
       .input('MinPrice', sql.Decimal(10,2), parseFloat(minPrice))
       .input('MaxPrice', sql.Decimal(10,2), parseFloat(maxPrice))
@@ -48,7 +48,7 @@ const filterProductsByPrice = async (req, res) => {
 const searchProducts = async (req, res) => {
   const { term } = req.query;
   try {
-    const pool = await sql.connect();
+    const pool = await getPool();
     const result = await pool.request()
       .input('SearchTerm', sql.NVarChar(100), term)
       .execute('SearchProductsByName');
@@ -63,7 +63,7 @@ const searchProducts = async (req, res) => {
 // Get all products (using view)
 const getAllProducts = async (req, res) => {
   try {
-    const pool = await sql.connect();
+    const pool = await getPool();
     const result = await pool.request()
       .query('SELECT * FROM vw_ProductListing');
     

@@ -1,5 +1,5 @@
 // backend/src/middleware/adminCheck.js
-const { sql } = require('../config/db');
+const { sql, getPool } = require('../config/db');
 
 const adminCheck = async (req, res, next) => {
   // Get userId from either query params or request body
@@ -12,7 +12,7 @@ const adminCheck = async (req, res, next) => {
   }
 
   try {
-    const pool = await sql.connect();
+    const pool = await getPool();
     const result = await pool.request()
       .input('UserID', sql.Int, userId)
       .query('SELECT Role FROM Users WHERE UserID = @UserID');

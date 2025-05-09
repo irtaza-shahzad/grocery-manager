@@ -1,23 +1,30 @@
-const { sql } = require('../config/db');
+
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const { getPool, sql } = require('../config/db');
 
 /**
  * POST /api/users/register
- * Body: { username, passwordHash, email, role }
+ * Body: { username, password, email, role }
+ * Expect plaintext password, hash it here.
  */
 const registerUser = async (req, res) => {
-  const { username, passwordHash, email, role } = req.body;
+  const { username, password, email, role } = req.body;
+
   try {
-    const pool = await sql.connect();    
+    const hashedPassword = await bcrypt.hash(password, 10); // Hash the password
+
+    const pool = await getPool();
     await pool.request()
       .input('Username', sql.NVarChar(50), username)
-      .input('PasswordHash', sql.NVarChar(255), passwordHash)
+      .input('PasswordHash', sql.NVarChar(255), hashedPassword) // use hashed password
       .input('Email', sql.NVarChar(100), email)
       .input('Role', sql.NVarChar(20), role)
-      .execute('RegisterUser');        // calls stored proc :contentReference[oaicite:0]{index=0}&#8203;:contentReference[oaicite:1]{index=1}
+      .execute('RegisterUser'); c
 
     res.status(201).json({ message: 'User registered successfully' });
+
   } catch (err) {
-    // if proc RAISERRORs on duplicate, SQL error code 50000 is raised
     if (err.number === 50000) {
       return res.status(409).json({ error: err.message });
     }
@@ -28,28 +35,49 @@ const registerUser = async (req, res) => {
 
 /**
  * POST /api/users/login
- * Body: { username, passwordHash }
+ * Body: { username, password }
+ * Expect plaintext password, compare with hashed one in DB.
  */
 const loginUser = async (req, res) => {
-  const { username, passwordHash } = req.body;
+  const { username, password } = req.body; //  Changed passwordHash → password
+
   try {
-    const pool = await sql.connect();
+    const pool = await getPool();
     const result = await pool.request()
       .input('Username', sql.NVarChar(50), username)
-      .input('PasswordHash', sql.NVarChar(255), passwordHash)
-      .query(
-        `SELECT UserID, Username, Role
-         FROM Users
-         WHERE Username = @Username 
-           AND PasswordHash = @PasswordHash;`
-      );  // login verification :contentReference[oaicite:2]{index=2}&#8203;:contentReference[oaicite:3]{index=3}
+      .query(`
+        SELECT UserID, Username, Role, PasswordHash
+        FROM Users
+        WHERE Username = @Username
+      `); // only check username first (we compare password in JS)
 
     if (!result.recordset.length) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     const user = result.recordset[0];
-    res.json({ userID: user.UserID, username: user.Username, role: user.Role });
+
+    const match = await bcrypt.compare(password, user.PasswordHash); // Compare hashes
+
+    if (!match) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // generate token
+    const token = jwt.sign(
+      { userID: user.UserID, username: user.Username, role: user.Role },
+      process.env.JWT_SECRET || 'defaultsecret',
+      { expiresIn: '1h' }
+    );
+
+    // return token
+    res.json({
+      userID: user.UserID,
+      username: user.Username,
+      role: user.Role,
+      token,
+    });
+
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ error: 'Internal Server Error' });

@@ -12,3 +12,9 @@ router.get('/:userId', favoriteController.getUserFavorites);
 router.delete('/:favoriteId/:userId', favoriteController.removeFavorite);
 
 module.exports = router;
+
+// module.exports = {
+//     addFavorite,
+//     getUserFavorites,
+//     removeFavorite
+//   };

@@ -1,7 +1,7 @@
 require('dotenv').config({ path: '../.env' });
 
 module.exports = {
-    port: process.env.port || 5000,
+    port: process.env.port || 3000,
     db: {
         user: process.env.DB_USER,
         password: process.env.DB_PASSWORD,

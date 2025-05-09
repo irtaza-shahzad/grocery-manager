@@ -1,11 +1,11 @@
-const { sql } = require('../config/db');
+const { sql, getPool } = require('../config/db');
 
 // 1. Order Placement (Matches PlaceOrderFromCart proc)
 const placeOrderFromCart = async (req, res) => {
     const { userId } = req.body;
   
     try {
-      const pool = await sql.connect();
+      const pool = await getPool();
       const result = await pool.request()
         .input('UserID', sql.Int, userId)
         .execute('PlaceOrderFromCart');
@@ -36,7 +36,7 @@ const getUserOrderHistory = async (req, res) => {
   const { userId } = req.params;
 
   try {
-    const pool = await sql.connect();
+    const pool = await getPool();
     const result = await pool.request()
       .input('UserID', sql.Int, userId)
       .execute('GetUserOrderHistory');
@@ -53,7 +53,7 @@ const getOrderDetails = async (req, res) => {
   const { orderId } = req.params;
 
   try {
-    const pool = await sql.connect();
+    const pool = await getPool();
     const result = await pool.request()
       .input('OrderID', sql.Int, orderId)
       .execute('GetOrderDetails');
@@ -68,7 +68,7 @@ const getOrderDetails = async (req, res) => {
 // 4. Order Status - Admin View (Matches vw_OrderHistory)
 const getAllOrders = async (req, res) => {
   try {
-    const pool = await sql.connect();
+    const pool = await getPool();
     const result = await pool.request()
       .query('SELECT * FROM vw_OrderHistory');
 

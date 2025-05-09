@@ -1,4 +1,4 @@
-const { sql } = require('../config/db');
+const { sql, getPool } = require('../config/db');
 
 const addRecipe = async (req, res) => {
     const { name, description, ingredients } = req.body;
@@ -8,7 +8,7 @@ const addRecipe = async (req, res) => {
     }
   
     try {
-      const pool = await sql.connect();
+      const pool = await getPool();
       const tvp = new sql.Table();
       tvp.columns.add('ProductID', sql.Int);
       tvp.columns.add('Quantity', sql.Int);
@@ -50,7 +50,7 @@ const getRecipeIngredients = async (req, res) => {
   const { recipeId } = req.params;
 
   try {
-    const pool = await sql.connect();
+    const pool = await getPool();
     const result = await pool.request()
       .input('RecipeID', sql.Int, recipeId)
       .execute('GetRecipeIngredients');
@@ -66,7 +66,7 @@ const addToCartFromRecipe = async (req, res) => {
   const { userId, recipeId } = req.body;
 
   try {
-    const pool = await sql.connect();
+    const pool = await getPool();
     await pool.request()
       .input('UserID', sql.Int, userId)
       .input('RecipeID', sql.Int, recipeId)
@@ -83,7 +83,7 @@ const addToCartFromRecipe = async (req, res) => {
 // 4. Get All Recipes
 const getAllRecipes = async (req, res) => {
   try {
-    const pool = await sql.connect();
+    const pool = await getPool();
     const result = await pool.request()
       .query('SELECT * FROM vw_AllRecipes');
     res.json(result.recordset);

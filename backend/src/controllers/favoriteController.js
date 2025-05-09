@@ -1,11 +1,11 @@
-const { sql } = require('../config/db');
+const { getPool, sql } = require('../config/db');
 
 // 1. Add to Favorites (Matches AddToFavourites proc)
 const addFavorite = async (req, res) => {
   const { userId, productId } = req.body;
 
   try {
-    const pool = await sql.connect();
+    const pool = await getPool();
     await pool.request()
       .input('UserID', sql.Int, userId)
       .input('ProductID', sql.Int, productId)
@@ -26,7 +26,7 @@ const getUserFavorites = async (req, res) => {
   const { userId } = req.params;
 
   try {
-    const pool = await sql.connect();
+    const pool = await getPool();
     const result = await pool.request()
       .input('UserID', sql.Int, userId)
       .execute('GetUserFavourites');
@@ -43,7 +43,7 @@ const removeFavorite = async (req, res) => {
   const { favoriteId, userId } = req.params;
 
   try {
-    const pool = await sql.connect();
+    const pool = await getPool();
     await pool.request()
       .input('FavouriteID', sql.Int, favoriteId)
       .input('UserID', sql.Int, userId)

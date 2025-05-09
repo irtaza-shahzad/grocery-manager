@@ -1,9 +1,9 @@
-const { sql } = require('../config/db');
+const { getPool, sql } = require('../config/db');
 
 // 1. Get low stock products (<10 quantity)
 const getLowStockProducts = async (req, res) => {
   try {
-    const pool = await sql.connect();
+    const pool = await getPool();
     const result = await pool.request()
       .query(`
         SELECT ProductID, Name, StockQuantity
