@@ -1,5 +1,5 @@
 require('dotenv').config({ path: '../.env' });
-
+const cors = require('cors');
 
 const express = require('express');
 const { connectDB } = require('./config/db');
@@ -15,6 +15,7 @@ const favoriteRoutes = require('./routes/favoriteRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
+app.use(cors());
 
 const PORT = process.env.PORT || 3000;
 

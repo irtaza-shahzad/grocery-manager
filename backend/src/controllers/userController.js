@@ -1,45 +1,62 @@
-
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { getPool, sql } = require('../config/db');
 
-/**
- * POST /api/users/register
- * Body: { username, password, email, role }
- * Expect plaintext password, hash it here.
- */
+// Register user
 const registerUser = async (req, res) => {
-  const { username, password, email, role } = req.body;
+  const { username, email, password } = req.body;
+
+  // Validate input
+  if (!username || !email || !password) {
+    return res.status(400).json({ error: 'All fields are required' });
+  }
 
   try {
-    const hashedPassword = await bcrypt.hash(password, 10); // Hash the password
-
     const pool = await getPool();
+    
+    // Check if the username or email already exists in the database
+    const existingUser = await pool.request()
+      .input('Username', sql.NVarChar(50), username)
+      .input('Email', sql.NVarChar(100), email)
+      .query(`
+        SELECT * FROM Users
+        WHERE Username = @Username OR Email = @Email
+      `);
+
+    if (existingUser.recordset.length > 0) {
+      return res.status(409).json({ error: 'Username or Email already exists' });
+    }
+
+    // Hash the password before storing it
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Insert the new user into the Users table
     await pool.request()
       .input('Username', sql.NVarChar(50), username)
-      .input('PasswordHash', sql.NVarChar(255), hashedPassword) // use hashed password
       .input('Email', sql.NVarChar(100), email)
-      .input('Role', sql.NVarChar(20), role)
-      .execute('RegisterUser'); c
+      .input('PasswordHash', sql.NVarChar(255), hashedPassword)
+      .input('Role', sql.NVarChar(50), 'Customer  ')  // Default role is 'Customer'
+      .execute('RegisterUser');  // Ensure the RegisterUser stored procedure exists and is correct
 
+    // Send success response
     res.status(201).json({ message: 'User registered successfully' });
 
   } catch (err) {
-    if (err.number === 50000) {
-      return res.status(409).json({ error: err.message });
-    }
-    console.error('Registration error:', err);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error('Registration error:', err);  // Log the error for debugging
+    res.status(500).json({ error: 'Internal Server Error', details: err.message });
   }
 };
 
-/**
- * POST /api/users/login
- * Body: { username, password }
- * Expect plaintext password, compare with hashed one in DB.
- */
+// Login user
+
 const loginUser = async (req, res) => {
-  const { username, password } = req.body; //  Changed passwordHash → password
+  console.log('Login request body:', req.body);  // Log the request body for debugging
+  const { username, password } = req.body;
+
+  // Validate input
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password required' });
+  }
 
   try {
     const pool = await getPool();
@@ -49,38 +66,28 @@ const loginUser = async (req, res) => {
         SELECT UserID, Username, Role, PasswordHash
         FROM Users
         WHERE Username = @Username
-      `); // only check username first (we compare password in JS)
-
-    if (!result.recordset.length) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
+      `);
 
     const user = result.recordset[0];
-
-    const match = await bcrypt.compare(password, user.PasswordHash); // Compare hashes
-
-    if (!match) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid username or password' });
     }
 
-    // generate token
-    const token = jwt.sign(
-      { userID: user.UserID, username: user.Username, role: user.Role },
-      process.env.JWT_SECRET || 'defaultsecret',
-      { expiresIn: '1h' }
-    );
+    // Compare the entered password with the stored hashed password
+    const match = await bcrypt.compare(password, user.PasswordHash);
+    if (!match) {
+      return res.status(401).json({ error: 'Invalid username or password' });
+    }
 
-    // return token
-    res.json({
-      userID: user.UserID,
-      username: user.Username,
-      role: user.Role,
-      token,
-    });
+    // Generate a JWT token with user ID and role
+    const token = jwt.sign({ id: user.UserID, role: user.Role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+
+    // Send the response with the JWT token
+    res.status(200).json({ token, username: user.Username, role: user.Role });
 
   } catch (err) {
-    console.error('Login error:', err);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error('Login error:', err);  // Log the error for debugging
+    res.status(500).json({ error: 'Internal Server Error', details: err.message });
   }
 };
 
