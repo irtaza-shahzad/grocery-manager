@@ -2,16 +2,41 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const UserDashboard = () => {
+const Dashboard = () => {
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetch('http://localhost:3000/api/user/products')  // Assuming endpoint for user products
-      .then((res) => res.json())
-      .then(setProducts);
-  }, []);
+console.log('UserDashboard component rendered');
+  useEffect(() => { 
+
+    const abc = async () => {
+      const response = await fetch('http://localhost:3000/api/products', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      if (!response.ok) {
+        console.error('Failed to fetch products');
+        return;
+      }
+      const data = await response.json();
+      setProducts(data);
+    }
+
+
+
+    abc();
+
+      console.log('Products fetched:', products);
+    
+  
+  }, [products])
+  
+
+
+  
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -56,4 +81,4 @@ const UserDashboard = () => {
   );
 };
 
-export default UserDashboard;
+export default Dashboard;

@@ -31,7 +31,7 @@ const Login = () => {
       alert('Login Successful');
 
       // Redirect user to their respective dashboard based on their role
-      if (data.role === 'admin') {
+      if (data.role === 'Admin') {
         navigate('/admin');  // Redirect to Admin Dashboard
       } else {
         navigate('/dashboard');  // Redirect to User Dashboard

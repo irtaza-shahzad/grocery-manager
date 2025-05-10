@@ -3,8 +3,9 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './pages/Login';
 import Register from './pages/Register';
 import AdminDashboard from './pages/AdminDashboard';
-import Dashboard from './pages/Dashboard';
 import ProtectedRoute from './components/ProtectedRoute'; // Import ProtectedRoute
+// import Dashboard from './pages/Dashboard';
+import Dashboard from './pages/Dashboard'
 
 const App = () => {
   return (
@@ -18,15 +19,15 @@ const App = () => {
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute role="customer">
-              <Dashboard />
+            <ProtectedRoute role="Customer">
+              { <Dashboard /> }
             </ProtectedRoute>
           }
         />
         <Route
           path="/admin"
           element={
-            <ProtectedRoute role="admin">
+            <ProtectedRoute role="Admin">
               <AdminDashboard />
             </ProtectedRoute>
           }
