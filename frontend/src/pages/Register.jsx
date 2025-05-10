@@ -13,7 +13,6 @@ const Register = () => {
     e.preventDefault();
     setError('');
 
-    // Make API call to register user
     try {
       const res = await fetch('/api/users/register', {
         method: 'POST',
@@ -24,7 +23,7 @@ const Register = () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Registration failed');
 
-      alert('Registration successful! Please login.');
+      alert('Sign Up successful! Please login.');
       navigate('/login');
     } catch (err) {
       setError(err.message);
@@ -32,61 +31,67 @@ const Register = () => {
   };
 
   return (
-    <div className="register-container">
-      <h1 className="text-4xl font-bold mb-4 text-center">Grocery Manager</h1>
-      <form onSubmit={handleSubmit} className="max-w-sm mx-auto">
-        <div className="mb-4">
-          <label className="block text-gray-700">Username</label>
-          <input
-            type="text"
-            placeholder="Enter Username"
-            className="w-full p-2 border rounded"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
+    <div className="bg-gradient-to-r from-black to-[#065f46] min-h-screen flex justify-center items-center">
+      <div className="bg-black bg-opacity-50 backdrop-blur-lg p-8 rounded-xl shadow-2xl w-full max-w-sm transition-all duration-300 ease-in-out hover:scale-105">
+        {/* Centralized Groco Image */}
+        <div className="flex justify-center mb-6">
+          <img src="/groco.png" alt="Groco" className="w-32 h-32" />
         </div>
 
-        <div className="mb-4">
-          <label className="block text-gray-700">Email</label>
-          <input
-            type="email"
-            placeholder="Enter Email"
-            className="w-full p-2 border rounded"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="block text-white">Username</label>
+            <input
+              type="text"
+              placeholder="Enter Username"
+              className="w-full p-3 mt-2 bg-transparent border-2 border-green-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 transition ease-in-out duration-200 hover:bg-green-600 text-white"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
+          </div>
 
-        <div className="mb-4">
-          <label className="block text-gray-700">Password</label>
-          <input
-            type="password"
-            placeholder="Enter Password"
-            className="w-full p-2 border rounded"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
+          <div className="mb-4">
+            <label className="block text-white">Email</label>
+            <input
+              type="email"
+              placeholder="Enter Email"
+              className="w-full p-3 mt-2 bg-transparent border-2 border-green-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 transition ease-in-out duration-200 hover:bg-green-600 text-white"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
 
-        {error && <p className="text-red-500">{error}</p>}
+          <div className="mb-6">
+            <label className="block text-white">Password</label>
+            <input
+              type="password"
+              placeholder="Enter Password"
+              className="w-full p-3 mt-2 bg-transparent border-2 border-green-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 transition ease-in-out duration-200 hover:bg-green-600 text-white"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
 
-        <button
-          type="submit"
-          className="w-full bg-blue-500 text-white py-2 rounded"
-        >
-          Register
-        </button>
-      </form>
+          {error && <p className="text-red-500 text-sm">{error}</p>}
 
-      <p className="text-center mt-4">
-        Already have an account?{' '}
-        <a href="/login" className="text-blue-500 underline">
-          Login
-        </a>
-      </p>
+          <button
+            type="submit"
+            className="w-full py-3 bg-green-500 text-white font-semibold rounded-lg hover:bg-green-600 transition duration-300 ease-in-out transform hover:scale-105"
+          >
+            Register
+          </button>
+        </form>
+
+        <p className="text-center text-white mt-4">
+          Already have an account?{' '}
+          <a href="/login" className="text-green-500 underline hover:text-green-400 transition duration-200">
+            Login
+          </a>
+        </p>
+      </div>
     </div>
   );
 };
