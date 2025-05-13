@@ -1,3 +1,11 @@
+/* global.css */
+
+/* Tailwind's base styles */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Apply Roboto font globally */
+* {
+  font-family: 'Roboto', sans-serif;
+}

@@ -1,23 +1,28 @@
 const { getPool, sql } = require('../config/db');
 
-// 1. Add to Favorites (Matches AddToFavourites proc)
+// 1. Add to Favorites
 const addFavorite = async (req, res) => {
   const { userId, productId } = req.body;
+
+  if (!userId || !productId) {
+    return res.status(400).json({ error: 'Missing userId or productId' });
+  }
 
   try {
     const pool = await getPool();
     await pool.request()
       .input('UserID', sql.Int, userId)
       .input('ProductID', sql.Int, productId)
-      .execute('AddToFavourites');
+      .execute('AddToFavourites'); // This should match the stored procedure
 
     res.status(201).json({ message: 'Product added to favorites' });
   } catch (err) {
-    if (err.number === 50000) { // RAISERROR from stored proc
-      return res.status(400).json({ error: err.message });
-    }
     console.error('Add favorite error:', err);
-    res.status(500).json({ error: 'Failed to add favorite' });
+    console.log('Request body its meee:', req.body); // Log the request body for debugging
+    console.log('User ID:', userId); // Log the user ID for debugging
+    console.log('Product ID:', productId); // Log the product ID for debugging
+
+    res.status(500).json({ error: 'Failed to add to favorites' });
   }
 };
 

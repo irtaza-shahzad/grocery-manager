@@ -22,13 +22,13 @@ const Login = () => {
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.error || 'Login failed');
-      
+
       localStorage.setItem('token', data.token);
       localStorage.setItem('role', data.role);
 
       if (data.role === 'Admin') {
         navigate('/admin');
-      } else if (data){
+      } else if (data) {
         navigate('/dashboard');
       }
     } catch (err) {
@@ -43,7 +43,7 @@ const Login = () => {
         <div className="flex justify-center mb-6">
           <img src="/groco.png" alt="Groco" className="w-40 h-40" />
         </div>
-        
+
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label className="block text-white">Username</label>
