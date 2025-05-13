@@ -1,11 +1,11 @@
-const { sql } = require('../config/db');
+const { sql, getPool } = require('../config/db');
 
 // 1. Add product review (Matches AddProductReview proc)
 const addReview = async (req, res) => {
   const { productId, userId, rating, comments } = req.body;
 
   try {
-    const pool = await sql.connect();
+    const pool = await getPool();
     await pool.request()
       .input('ProductID', sql.Int, productId)
       .input('UserID', sql.Int, userId)
@@ -28,7 +28,7 @@ const getProductReviews = async (req, res) => {
   const { productId } = req.params;
 
   try {
-    const pool = await sql.connect();
+    const pool = await getPool();
     const result = await pool.request()
       .input('ProductID', sql.Int, productId)
       .execute('GetProductReviews');
@@ -45,7 +45,7 @@ const getRatingSummary = async (req, res) => {
   const { productId } = req.params;
 
   try {
-    const pool = await sql.connect();
+    const pool = await getPool();
     const result = await pool.request()
       .input('ProductID', sql.Int, productId)
       .execute('GetProductRatingSummary');
@@ -60,7 +60,7 @@ const getRatingSummary = async (req, res) => {
 // 4. Get all reviews (Uses vw_ProductReviews view)
 const getAllReviews = async (req, res) => {
   try {
-    const pool = await sql.connect();
+    const pool = await getPool();
     const result = await pool.request()
       .query('SELECT * FROM vw_ProductReviews');
 

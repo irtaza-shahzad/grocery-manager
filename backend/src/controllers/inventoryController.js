@@ -1,9 +1,9 @@
-const { sql } = require('../config/db');
+const { sql, getPool } = require('../config/db');
 
 // 1. Get total sales by category (simple query)
 const getSalesByCategory = async (req, res) => {
   try {
-    const pool = await sql.connect();
+    const pool = await getPool();
     const result = await pool.request()
       .query(`
         SELECT 
@@ -26,7 +26,7 @@ const getSalesByCategory = async (req, res) => {
 // 2. Get orders by status (simple query)
 const getOrdersByStatus = async (req, res) => {
   try {
-    const pool = await sql.connect();
+    const pool = await getPool();
     const result = await pool.request()
       .query(`
         SELECT 
@@ -50,7 +50,7 @@ const updateProductStock = async (req, res) => {
   const { quantityChange } = req.body;
 
   try {
-    const pool = await sql.connect();
+    const pool = await getPool();
     await pool.request()
       .input('ProductID', sql.Int, productId)
       .input('QuantityChange', sql.Int, quantityChange)

@@ -1,42 +1,37 @@
 const sql = require('mssql');
-require('dotenv').config(); // load env vars
+require('dotenv').config();
+
 
 const config = {
   user: process.env.DB_USER,
-  password: process.env.DB_PASS,
+  password: process.env.DB_PASSWORD,
   server: process.env.DB_SERVER,
-  database: process.env.DB_NAME,
+  database: process.env.DB_DATABASE,
   options: {
-    encrypt: false, // Use 'true' if you're using encrypted connections
-    trustServerCertificate: true, // Accept self-signed certificates
+    encrypt: true,
+    trustServerCertificate: true,
   },
 };
 
-// Establish the connection pool
 let pool;
 
 async function connectDB() {
   try {
-    pool = await sql.connect(config);
-    console.log('Database Connected Successfully');
+    if (!pool) {
+      pool = await sql.connect(config);
+      console.log('Database Connected Successfully');
+    }
   } catch (error) {
     console.error('Database Connection Failed:', error.message);
   }
 }
 
-// Function to run a query
-async function runQuery(query) {
+
+function getPool() {
   if (!pool) {
-    console.error('Database connection not established');
-    return;
+    throw new Error('Database not connected yet');
   }
-  
-  try {
-    const result = await pool.request().query(query);
-    return result.recordset; // return query results
-  } catch (error) {
-    console.error('Error running query:', error.message);
-  }
+  return pool;
 }
 
-module.exports = { connectDB, runQuery, sql };
+module.exports = { connectDB, getPool, sql };

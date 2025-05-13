@@ -1,11 +1,11 @@
-const { sql } = require('../config/db');
+const { getPool, sql } = require('../config/db');
 
 // Add item to cart
 const addToCart = async (req, res) => {
   const { userId, productId, quantity } = req.body;
   
   try {
-    const pool = await sql.connect();
+    const pool = await getPool();
     await pool.request()
       .input('UserID', sql.Int, userId)
       .input('ProductID', sql.Int, productId)
@@ -27,7 +27,7 @@ const getUserCart = async (req, res) => {
   const { userId } = req.params;
 
   try {
-    const pool = await sql.connect();
+    const pool = await getPool();
     const result = await pool.request()
       .input('UserID', sql.Int, userId)
       .execute('GetUserCart');
@@ -45,7 +45,7 @@ const updateCartItem = async (req, res) => {
   const { userId, quantity } = req.body;
 
   try {
-    const pool = await sql.connect();
+    const pool = await getPool();
     await pool.request()
       .input('CartItemID', sql.Int, cartItemId)
       .input('UserID', sql.Int, userId)
@@ -64,7 +64,7 @@ const removeCartItem = async (req, res) => {
   const { cartItemId, userId } = req.params;
 
   try {
-    const pool = await sql.connect();
+    const pool = await getPool();
     await pool.request()
       .input('CartItemID', sql.Int, cartItemId)
       .input('UserID', sql.Int, userId)
@@ -82,7 +82,7 @@ const clearCart = async (req, res) => {
   const { userId } = req.params;
 
   try {
-    const pool = await sql.connect();
+    const pool = await getPool();
     const result = await pool.request()
       .input('UserID', sql.Int, userId)
       .execute('ClearUserCart'); // Using the new stored procedure
@@ -99,7 +99,7 @@ const clearCart = async (req, res) => {
   // Get all carts (admin view using vw_UserCart)
   const getAllCarts = async (req, res) => {
     try {
-      const pool = await sql.connect();
+      const pool = await getPool();
       const result = await pool.request()
         .query('SELECT * FROM vw_UserCart'); // Uses your view
   
