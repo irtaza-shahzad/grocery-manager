@@ -24,6 +24,6 @@ router.delete('/:cartItemId/:userId', cartController.removeCartItem);
 
 
 // GET /api/cart/admin/all - View all user carts (admin only)
-router.get('/admin/all', adminCheck, cartController.getAllCarts);
+router.get('/admin/all',  cartController.getAllCarts);
 
 module.exports = router;
