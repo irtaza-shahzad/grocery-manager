@@ -92,9 +92,22 @@ const getAllRecipes = async (req, res) => {
   }
 };
 
+const addRecipes=async (req,res)=>{
+  const {name,description}=req.body
+  if(!name || !description)
+  {
+    res.status(500).json({error:"all fields are required"})
+  }
+  const pool = await getPool();
+  await pool.request().input('name',sql.NVarChar,name)
+  .input('description',sql.NVarChar,description)
+  .execute('AddRecipe')
+  res.status(200).json({message:"recipe added successfully"})
+}
 module.exports = {
   addRecipe,
   getRecipeIngredients,
   addToCartFromRecipe,
-  getAllRecipes
+  getAllRecipes,
+  addRecipes
 };

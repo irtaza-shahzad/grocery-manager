@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getTokenPayload } from '../utils/auth'; // Assuming the path to your auth utility is correct
-import Button from '../components/Button'; // Correct path to Button component
+import { getTokenPayload } from '../utils/auth'; // Ensure this path is correct
+import Button from '../components/Button'; // Ensure this path is correct
+import axios from 'axios';
 
 const Dashboard = () => {
+  const payload = getTokenPayload();
+  const userId = payload.id; // Ensure your token payload contains the user ID
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -15,13 +18,15 @@ const Dashboard = () => {
   const [showCartModal, setShowCartModal] = useState(false);
   const [notification, setNotification] = useState('');
   const [showNotification, setShowNotification] = useState(false);
-
+  const [reviewModal, setReviewModal] = useState(false);
+  const [productId, setProductId] = useState(0);
+  const [comment, setComment] = useState('');
+  const [rating, setRating] = useState(0);
+  const [pid, setPid] = useState(0);
+  const [showFavoritesModal, setShowFavoritesModal] = useState(false);
   const navigate = useNavigate();
 
-  const payload = getTokenPayload();
-  const userId = payload.id; // user ID is stored in the token payload
-
-  // Fetch products on page load
+  // Fetch products on page load and when filters change
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -29,11 +34,9 @@ const Dashboard = () => {
 
         if (selectedCategory) {
           url = `http://localhost:3000/api/products/category/${selectedCategory}`;
-        }
-        else if (minPrice !== '' && maxPrice !== '') {
+        } else if (minPrice !== '' && maxPrice !== '') {
           url = `http://localhost:3000/api/products/filter?minPrice=${minPrice}&maxPrice=${maxPrice}`;
-        }
-        else if (searchTerm) {
+        } else if (searchTerm) {
           url = `http://localhost:3000/api/products/search?term=${searchTerm}`;
         }
 
@@ -58,7 +61,6 @@ const Dashboard = () => {
           ];
           setCategories(uniqueCategories);
         }
-
       } catch (err) {
         console.error('Error fetching products:', err);
       }
@@ -84,9 +86,9 @@ const Dashboard = () => {
     };
 
     if (userId) {
-      fetchCart(); // Fetch the user's cart as soon as the component mounts
+      fetchCart();
     }
-  }, [userId]); // Ensure it's triggered when the component mounts or userId changes
+  }, [userId]);
 
   // Fetch favorites when the page loads
   useEffect(() => {
@@ -105,7 +107,7 @@ const Dashboard = () => {
     };
 
     if (userId) {
-      fetchFavorites(); // Fetch the user's favorites as soon as the component mounts
+      fetchFavorites();
     }
   }, [userId]);
 
@@ -115,7 +117,7 @@ const Dashboard = () => {
     navigate('/login');
   };
 
-  // Function to fetch cart (now defined outside useEffect)
+  // Function to fetch cart
   const fetchCart = async () => {
     try {
       const response = await fetch(`http://localhost:3000/api/cart/${userId}`);
@@ -124,7 +126,7 @@ const Dashboard = () => {
         return;
       }
       const cartData = await response.json();
-      setCart(cartData); // Update cart state with fetched data
+      setCart(cartData);
     } catch (err) {
       console.error('Error fetching cart:', err);
     }
@@ -133,15 +135,14 @@ const Dashboard = () => {
   // Function to add item to cart
   const addToCart = async (productId) => {
     try {
-      const quantity = 1; // You can customize this, based on user input or defaults
+      let quantity = 1;
 
-      // Optimistically add the item to the local cart state
       const product = products.find((product) => product.ProductID === productId);
       const updatedCart = [
         ...cart,
         { ...product, Quantity: quantity, ProductID: product.ProductID },
       ];
-      setCart(updatedCart); // Update local state immediately
+      setCart(updatedCart);
 
       const response = await fetch('http://localhost:3000/api/cart', {
         method: 'POST',
@@ -159,10 +160,10 @@ const Dashboard = () => {
         setNotification('Item successfully added to cart');
         setShowNotification(true);
         setTimeout(() => {
-          setShowNotification(false); // Hide the notification after 2 seconds
+          setShowNotification(false);
         }, 2000);
 
-        fetchCart(); // Refresh cart after adding the item
+        fetchCart();
       } else {
         console.error('Failed to add item to cart');
       }
@@ -191,9 +192,9 @@ const Dashboard = () => {
   // Function to determine stock status color
   const getStockStatusClass = (stockQuantity) => {
     if (stockQuantity > 0) {
-      return 'text-green-500'; // In Stock (Green)
+      return 'text-green-500';
     }
-    return 'text-red-500'; // Out of Stock (Red)
+    return 'text-red-500';
   };
 
   // Function to open the cart modal
@@ -214,7 +215,7 @@ const Dashboard = () => {
       });
 
       if (response.ok) {
-        setCart([]); // Clear the local cart state
+        setCart([]);
       } else {
         console.error('Failed to clear cart');
       }
@@ -228,8 +229,6 @@ const Dashboard = () => {
     try {
       const product = products.find((product) => product.ProductID === productId);
 
-      console.log('Adding to favorites:', product);
-      console.log('User ID:', userId);
       await fetch('http://localhost:3000/api/favorites', {
         method: 'POST',
         headers: {
@@ -240,19 +239,32 @@ const Dashboard = () => {
           productId: productId,
         }),
       });
-      setFavorites((prevFavorites) => [...prevFavorites, product]); // Update local favorites state
+      setFavorites((prevFavorites) => [...prevFavorites, product]);
     } catch (err) {
       console.error('Error adding to favorites:', err);
     }
   };
 
-  // Function to remove from favorites
   const removeFavorite = async (productId) => {
     try {
-      await fetch(`http://localhost:3000/api/favorites/${productId}/${userId}`, {
+      const favoriteItem = favorites.find((item) => item.ProductID === productId);
+      
+      if (!favoriteItem) {
+        console.error('Favorite not found for product:', productId);
+        return;
+      }
+  
+      const favoriteId = favoriteItem.FavouriteID;
+  
+      const response = await fetch(`http://localhost:3000/api/favorites/${favoriteId}/${userId}`, {
         method: 'DELETE',
       });
-      setFavorites((prevFavorites) => prevFavorites.filter((item) => item.ProductID !== productId)); // Update local favorites state
+  
+      if (response.ok) {
+        setFavorites((prevFavorites) => prevFavorites.filter((item) => item.ProductID !== productId));
+      } else {
+        console.error('Failed to remove from favorites');
+      }
     } catch (err) {
       console.error('Error removing from favorites:', err);
     }
@@ -260,7 +272,7 @@ const Dashboard = () => {
 
   // Function to check if a product is in favorites
   const isFavorite = (productId) => {
-    return favorites.some((item) => item.ProductID === productId);
+    return favorites.find((item) => item.ProductID === productId) ? true : false;
   };
 
   // Function to handle favorite toggle
@@ -273,177 +285,238 @@ const Dashboard = () => {
     }
   };
 
+  // Function to update cart quantity
+  const updateCartQuantity = async (productId, quantity) => {
+    try {
+      const response = await fetch('http://localhost:3000/api/cart', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, productId, quantity }),
+      });
+
+      if (response.ok) {
+        fetchCart();
+      } else {
+        console.error('Failed to update cart quantity');
+      }
+    } catch (err) {
+      console.error('Error updating cart quantity:', err);
+    }
+  };
+
+  // Update the cart total dynamically (based on price * quantity)
+  const getCartTotal = () => {
+    return cart.reduce((total, item) => total + item.Price * item.Quantity, 0);
+  };
+
+  // Function to open the favorites modal
+  const openFavoritesModal = () => {
+    setShowFavoritesModal(true);
+  };
+
+  // Function to close the favorites modal
+  const closeFavoritesModal = () => {
+    setShowFavoritesModal(false);
+  };
+
   return (
-    <div className="user-dashboard-container min-h-screen bg-gray-100">
-      <header className="p-4 bg-gray-800 text-white flex justify-between items-center">
-        <h1 className="text-3xl">User Dashboard</h1>
-        <button onClick={handleLogout} className="bg-red-500 px-4 py-2 rounded">
-          Logout
-        </button>
-      </header>
-
-      <main className="p-4">
-        {/* FILTER SECTION */}
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <select
-            className="p-2 border rounded"
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            value={selectedCategory}
-          >
-            <option value="">All Categories</option>
-            {categories.map((cat) => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </select>
-
-          <input
-            type="number"
-            className="p-2 border rounded"
-            placeholder="Min Price"
-            value={minPrice}
-            onChange={(e) => setMinPrice(e.target.value)}
-          />
-          <input
-            type="number"
-            className="p-2 border rounded"
-            placeholder="Max Price"
-            value={maxPrice}
-            onChange={(e) => setMaxPrice(e.target.value)}
-          />
-
-          <input
-            type="text"
-            className="p-2 border rounded"
-            placeholder="Search products..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-
-          <button
-            className="bg-gray-700 text-white p-2 rounded"
-            onClick={() => {
-              setSelectedCategory('');
-              setMinPrice('');
-              setMaxPrice('');
-              setSearchTerm('');
-            }}
-          >
-            Clear Filters
+    <>
+      <div className="user-dashboard-container min-h-screen bg-gray-100">
+        <header className="p-4 bg-gray-800 text-white flex justify-between items-center">
+          <h1 className="text-3xl">User Dashboard</h1>
+          <button onClick={handleLogout} className="bg-red-500 px-4 py-2 rounded">
+            Logout
           </button>
-        </div>
+        </header>
 
-        {/* PRODUCT LISTING */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {products.map((product) => (
-            <div key={product.ProductID} className="border p-4 rounded bg-white shadow relative">
-              <button
-                onClick={() => handleFavorite(product.ProductID)}
-                className={`absolute top-2 right-2 p-2 border-2 border-black rounded-full ${isFavorite(product.ProductID) ? 'text-red-500' : 'text-transparent'}`}
-              >
-                ❤️
-              </button>
+        <main className="p-4">
+          {/* FILTER SECTION */}
+          <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <select
+              className="p-2 border rounded"
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              value={selectedCategory}
+            >
+              <option value="">All Categories</option>
+              {categories.map((category, idx) => (
+                <option key={idx} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
 
-              <h3 className="text-lg font-semibold">{product.Name}</h3>
-              <p className="text-sm text-gray-600">{product.CategoryName}</p>
-              <p className="text-md font-bold">${product.Price}</p>
-              <p className={`text-sm font-medium ${getStockStatusClass(product.StockQuantity)}`}>
-                {product.StockQuantity > 0 ? 'In Stock' : 'Out of Stock'}
-              </p>
-              <button
-                onClick={() => addToCart(product.ProductID)}
-                className="bg-blue-500 text-white p-2 rounded mt-2"
-              >
-                Add to Cart
-              </button>
-            </div>
-          ))}
-        </section>
+            <input
+              type="number"
+              placeholder="Min Price"
+              className="p-2 border rounded"
+              value={minPrice}
+              onChange={(e) => setMinPrice(e.target.value)}
+            />
+            <input
+              type="number"
+              placeholder="Max Price"
+              className="p-2 border rounded"
+              value={maxPrice}
+              onChange={(e) => setMaxPrice(e.target.value)}
+            />
+            <input
+              type="text"
+              placeholder="Search by name"
+              className="p-2 border rounded"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
 
-        {/* Custom Notification */}
-        {showNotification && (
-          <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-green-500 text-white p-4 rounded-md shadow-lg transition-opacity duration-500 ease-out opacity-100">
-            {notification}
+            <button
+              onClick={() => {
+                setSelectedCategory('');
+                setMinPrice('');
+                setMaxPrice('');
+                setSearchTerm('');
+              }}
+              className="p-2 bg-gray-500 text-white rounded"
+            >
+              Reset
+            </button>
+
+            <button
+              onClick={openCartModal}
+              className="p-2 bg-blue-600 text-white rounded"
+            >
+              View Cart ({cart.length})
+            </button>
+
+            {/* View Favorites Button */}
+            <button
+              onClick={openFavoritesModal}
+              className="p-2 bg-green-600 text-white rounded"
+            >
+              View Favorites ({favorites.length})
+            </button>
           </div>
-        )}
 
-        {/* View Cart Button */}
-        <button
-          onClick={openCartModal}
-          className="bg-gray-700 text-white p-2 rounded mt-4"
-        >
-          View Cart
-        </button>
+          {/* NOTIFICATION */}
+          {showNotification && (
+            <div className="mb-4 p-3 bg-green-100 text-green-700 border border-green-400 rounded">
+              {notification}
+            </div>
+          )}
 
-        {/* Cart Modal */}
-        {showCartModal && (
-          <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white rounded-lg shadow-lg w-96 p-6 relative">
-              {/* Clear Cart Button */}
-              <button
-                onClick={clearCart}
-                className="absolute top-2 left-2 text-xl font-bold text-gray-700"
-              >
-                🗑️
-              </button>
-
-              <button
-                onClick={closeCartModal}
-                className="absolute top-2 right-2 text-xl font-bold text-red-500"
-              >
-                ❌
-              </button>
-
-              <h2 className="text-2xl mb-4 text-center">Your Cart</h2>
-              <div className="overflow-y-auto max-h-60">
-                <table className="w-full table-auto">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="py-2">Item Name</th>
-                      <th className="py-2">Quantity</th>
-                      <th className="py-2">Price</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {cart.length > 0 ? (
-                      cart.map((item) => (
-                        <tr key={item.ProductID} className="border-b">
-                          <td className="py-2">{item.Name}</td>
-                          <td className="py-2 flex items-center justify-center">
-                            <button
-                              onClick={() => decreaseQuantity(item.ProductID)}
-                              className="bg-gray-300 p-2 rounded"
-                            >
-                              -
-                            </button>
-                            <span className="mx-2">{item.Quantity}</span>
-                            <button
-                              onClick={() => increaseQuantity(item.ProductID)}
-                              className="bg-gray-300 p-2 rounded"
-                            >
-                              +
-                            </button>
-                          </td>
-                          <td className="py-2">${item.Price * item.Quantity}</td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="3" className="text-center text-gray-500 py-4">Your cart is empty</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+          {/* PRODUCT LIST */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {products.map((product) => (
+              <div key={product.ProductID} className="bg-white p-4 rounded shadow">
+                <h3 className="text-lg font-semibold">{product.Name}</h3>
+                <p className="text-sm text-gray-500">Category: {product.CategoryName}</p>
+                <p className="text-sm">Price: Rs. {product.Price}</p>
+                <p className={`text-sm ${getStockStatusClass(product.StockQuantity)}`}>
+                  {product.StockQuantity > 0 ? 'In Stock' : 'Out of Stock'}
+                </p>
+                <div className="mt-2 flex gap-2">
+                  <button
+                    className="bg-green-600 text-white px-3 py-1 rounded"
+                    onClick={() => addToCart(product.ProductID)}
+                    disabled={product.StockQuantity <= 0}
+                  >
+                    Add to Cart
+                  </button>
+                  <button
+                    className={`px-3 py-1 rounded ${
+                      isFavorite(product.ProductID)
+                        ? 'bg-red-500 text-white'
+                        : 'bg-yellow-500 text-black'
+                    }`}
+                    onClick={() => handleFavorite(product.ProductID)}
+                  >
+                    {isFavorite(product.ProductID) ? 'Unfavorite' : 'Favorite'}
+                  </button>
+                </div>
               </div>
-
-              <button className="bg-green-500 text-white p-2 rounded mt-4 w-full">
-                Proceed to Checkout
-              </button>
-            </div>
+            ))}
           </div>
-        )}
 
-      </main>
-    </div>
+          {/* CART MODAL */}
+          {showCartModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+              <div className="bg-white p-6 rounded w-11/12 md:w-2/3 max-h-[80vh] overflow-y-auto">
+                <h2 className="text-2xl font-bold mb-4">Your Cart</h2>
+                {cart.length === 0 ? (
+                  <p>Your cart is empty.</p>
+                ) : (
+                  cart.map((item) => (
+                    <div
+                      key={item.ProductID}
+                      className="flex justify-between items-center border-b py-2"
+                    >
+                      <div>
+                        <h3 className="font-semibold">{item.Name}</h3>
+                        <p>Price: Rs. {item.Price}</p>
+                        <p>Quantity: {item.Quantity}</p>
+                        {/* Display total price for this item */}
+                        <p className="font-semibold">Total: Rs. {item.Price * item.Quantity}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {/* Removed the +, -, and "Remove" buttons */}
+                      </div>
+                    </div>
+                  ))
+                )}
+                <div className="mt-4 flex justify-between">
+                  <p className="font-semibold">Total: Rs. {getCartTotal()}</p>
+                  <button
+                    onClick={clearCart}
+                    className="bg-red-600 text-white px-4 py-2 rounded"
+                  >
+                    Clear Cart
+                  </button>
+                  <button
+                    onClick={closeCartModal}
+                    className="bg-gray-600 text-white px-4 py-2 rounded"
+                  >
+                    Close
+                  </button>
+                </div>
+
+               
+              </div>
+            </div>
+          )}
+
+          {/* FAVORITES MODAL */}
+          {showFavoritesModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+              <div className="bg-white p-6 rounded w-11/12 md:w-2/3 max-h-[80vh] overflow-y-auto">
+                <h2 className="text-2xl font-bold mb-4">Your Favorite Products</h2>
+                {favorites.length === 0 ? (
+                  <p>Your favorites list is empty.</p>
+                ) : (
+                  <div>
+                    {favorites.map((item) => (
+                      <div key={item.ProductID} className="flex justify-between items-center border-b py-2">
+                        <div>
+                          <h3 className="font-semibold">{item.Name}</h3>
+                          <p>Price: Rs. {item.Price}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="mt-4 flex justify-between">
+                  <button
+                    onClick={closeFavoritesModal}
+                    className="bg-gray-600 text-white px-4 py-2 rounded"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
+    </>
   );
 };
 

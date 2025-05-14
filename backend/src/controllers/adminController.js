@@ -38,7 +38,7 @@ const addProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
     try {
         const { productID, name, price, stockQuantity, categoryID, description, userID } = req.body;
-
+        console.log(productID, name, price, stockQuantity, categoryID, description, userID);
         if (!userID) {
             return res.status(400).json({ message: 'UserID is required' });
         }

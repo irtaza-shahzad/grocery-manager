@@ -11,6 +11,6 @@ router.get('/history/:userId', orderController.getUserOrderHistory);
 router.get('/details/:orderId', orderController.getOrderDetails);
 
 // Order Status - Admin Only
-router.get('/admin/all', adminCheck, orderController.getAllOrders);
+router.get('/all', orderController.getAllOrders);
 
 module.exports = router;

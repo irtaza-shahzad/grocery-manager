@@ -1,35 +1,72 @@
 const { sql, getPool } = require('../config/db');
 
+// // 1. Order Placement (Matches PlaceOrderFromCart proc)
+// const placeOrderFromCart = async (req, res) => {
+//     const { userId } = req.body;
+  
+//     try {
+//       const pool = await getPool();
+//       const result = await pool.request()
+//         .input('UserID', sql.Int, userId)
+//         .execute('PlaceOrderFromCart');
+  
+//       // Check the returned message
+//       const response = result.recordset[0];
+      
+//       if (response.Message === 'Cart is empty') {
+//         return res.status(400).json({ error: response.Message });
+//       }
+  
+//       res.status(201).json({
+//         message: response.Message,
+//         orderId: response.OrderID,
+//         totalAmount: response.TotalAmount
+//       });
+  
+//     } catch (err) {
+//       console.error('Order placement error:', err);
+//       res.status(500).json({
+//         error: err.message || 'Order placement failed'
+//       });
+//     }
+//   };
+
+
 // 1. Order Placement (Matches PlaceOrderFromCart proc)
 const placeOrderFromCart = async (req, res) => {
-    const { userId } = req.body;
-  
-    try {
-      const pool = await getPool();
-      const result = await pool.request()
-        .input('UserID', sql.Int, userId)
-        .execute('PlaceOrderFromCart');
-  
-      // Check the returned message
-      const response = result.recordset[0];
-      
-      if (response.Message === 'Cart is empty') {
-        return res.status(400).json({ error: response.Message });
-      }
-  
-      res.status(201).json({
-        message: response.Message,
-        orderId: response.OrderID,
-        totalAmount: response.TotalAmount
-      });
-  
-    } catch (err) {
-      console.error('Order placement error:', err);
-      res.status(500).json({ 
-        error: err.message || 'Order placement failed' 
-      });
+  const { userId } = req.body;
+
+  try {
+    const pool = await getPool();
+    const result = await pool.request()
+      .input('UserID', sql.Int, userId)
+      .execute('PlaceOrderFromCart');
+
+    const response = result.recordset[0];
+    
+    if (response.Message === 'Cart is empty') {
+      return res.status(400).json({ error: response.Message });
     }
-  };
+
+    // Clear cart after placing the order
+    await pool.request()
+      .input('UserID', sql.Int, userId)
+      .execute('ClearCart');  // Ensure you have a stored procedure to clear the cart.
+
+    res.status(201).json({
+      message: response.Message,
+      orderId: response.OrderID,
+      totalAmount: response.TotalAmount
+    });
+
+  } catch (err) {
+    console.error('Order placement error:', err);
+    res.status(500).json({
+      error: err.message || 'Order placement failed'
+    });
+  }
+};
+
   
 // 2. Order Status - User History (Matches GetUserOrderHistory proc)
 const getUserOrderHistory = async (req, res) => {

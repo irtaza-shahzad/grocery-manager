@@ -4,6 +4,7 @@ const recipeController = require('../controllers/recipeController');
 
 // POST /recipes - Add new recipe
 router.post('/', recipeController.addRecipe);
+router.post('/add', recipeController.addRecipes);
 
 // GET /recipes/:id/ingredients - Get ingredients
 router.get('/:recipeId/ingredients', recipeController.getRecipeIngredients);

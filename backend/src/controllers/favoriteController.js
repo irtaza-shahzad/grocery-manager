@@ -32,9 +32,11 @@ const getUserFavorites = async (req, res) => {
 
   try {
     const pool = await getPool();
+    console.log('pool:', pool); // Log the pool for debugging
+    console.log('userId:', userId); // Log the user ID for debugging
     const result = await pool.request()
       .input('UserID', sql.Int, userId)
-      .execute('GetUserFavourites');
+      .execute('GetUserFavouritesV3');
 
     res.json(result.recordset);
   } catch (err) {
@@ -52,7 +54,7 @@ const removeFavorite = async (req, res) => {
     await pool.request()
       .input('FavouriteID', sql.Int, favoriteId)
       .input('UserID', sql.Int, userId)
-      .execute('RemoveFromFavourites');
+      .execute('RemoveFromFavouritesV2');
 
     res.json({ message: 'Removed from favorites' });
   } catch (err) {
